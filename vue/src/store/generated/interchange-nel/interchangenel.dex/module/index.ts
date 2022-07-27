@@ -4,15 +4,17 @@ import { StdFee } from "@cosmjs/launchpad";
 import { SigningStargateClient } from "@cosmjs/stargate";
 import { Registry, OfflineSigner, EncodeObject, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
+import { MsgCancelSellOrder } from "./types/dex/tx";
+import { MsgSendBuyOrder } from "./types/dex/tx";
 import { MsgSendSellOrder } from "./types/dex/tx";
 import { MsgSendCreatePair } from "./types/dex/tx";
-import { MsgSendBuyOrder } from "./types/dex/tx";
 
 
 const types = [
+  ["/interchangenel.dex.MsgCancelSellOrder", MsgCancelSellOrder],
+  ["/interchangenel.dex.MsgSendBuyOrder", MsgSendBuyOrder],
   ["/interchangenel.dex.MsgSendSellOrder", MsgSendSellOrder],
   ["/interchangenel.dex.MsgSendCreatePair", MsgSendCreatePair],
-  ["/interchangenel.dex.MsgSendBuyOrder", MsgSendBuyOrder],
   
 ];
 export const MissingWalletError = new Error("wallet is required");
@@ -45,9 +47,10 @@ const txClient = async (wallet: OfflineSigner, { addr: addr }: TxClientOptions =
 
   return {
     signAndBroadcast: (msgs: EncodeObject[], { fee, memo }: SignAndBroadcastOptions = {fee: defaultFee, memo: ""}) => client.signAndBroadcast(address, msgs, fee,memo),
+    msgCancelSellOrder: (data: MsgCancelSellOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgCancelSellOrder", value: MsgCancelSellOrder.fromPartial( data ) }),
+    msgSendBuyOrder: (data: MsgSendBuyOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendBuyOrder", value: MsgSendBuyOrder.fromPartial( data ) }),
     msgSendSellOrder: (data: MsgSendSellOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendSellOrder", value: MsgSendSellOrder.fromPartial( data ) }),
     msgSendCreatePair: (data: MsgSendCreatePair): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendCreatePair", value: MsgSendCreatePair.fromPartial( data ) }),
-    msgSendBuyOrder: (data: MsgSendBuyOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendBuyOrder", value: MsgSendBuyOrder.fromPartial( data ) }),
     
   };
 };
