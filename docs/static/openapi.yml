@@ -51899,6 +51899,8 @@ definitions:
         type: string
       priceDenom:
         type: string
+  interchangenel.dex.MsgCancelBuyOrderResponse:
+    type: object
   interchangenel.dex.MsgCancelSellOrderResponse:
     type: object
   interchangenel.dex.MsgSendBuyOrderResponse:
