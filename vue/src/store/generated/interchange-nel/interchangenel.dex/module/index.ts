@@ -5,10 +5,12 @@ import { SigningStargateClient } from "@cosmjs/stargate";
 import { Registry, OfflineSigner, EncodeObject, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
 import { MsgSendCreatePair } from "./types/dex/tx";
+import { MsgSendSellOrder } from "./types/dex/tx";
 
 
 const types = [
   ["/interchangenel.dex.MsgSendCreatePair", MsgSendCreatePair],
+  ["/interchangenel.dex.MsgSendSellOrder", MsgSendSellOrder],
   
 ];
 export const MissingWalletError = new Error("wallet is required");
@@ -42,6 +44,7 @@ const txClient = async (wallet: OfflineSigner, { addr: addr }: TxClientOptions =
   return {
     signAndBroadcast: (msgs: EncodeObject[], { fee, memo }: SignAndBroadcastOptions = {fee: defaultFee, memo: ""}) => client.signAndBroadcast(address, msgs, fee,memo),
     msgSendCreatePair: (data: MsgSendCreatePair): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendCreatePair", value: MsgSendCreatePair.fromPartial( data ) }),
+    msgSendSellOrder: (data: MsgSendSellOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendSellOrder", value: MsgSendSellOrder.fromPartial( data ) }),
     
   };
 };
