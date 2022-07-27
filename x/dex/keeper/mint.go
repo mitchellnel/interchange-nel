@@ -80,3 +80,74 @@ func (k Keeper) LockTokens(
 
 	return nil
 }
+
+func (k Keeper) SafeMint(
+	ctx sdk.Context,
+	port string,
+	channel string,
+	receiver sdk.AccAddress,
+	denom string,
+	amount int32,
+) error {
+	if isIBCToken(denom) {
+		// mint IBC tokens
+		if err := k.MintTokens(
+			ctx, receiver, sdk.NewCoin(denom, sdk.NewInt(int64(amount))),
+		); err != nil {
+			return err
+		}
+	} else {
+		// unlock native tokens
+		if err := k.UnlockTokens(
+			ctx, port, channel, receiver, sdk.NewCoin(denom, sdk.NewInt(int64(amount))),
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) MintTokens(ctx sdk.Context, receiver sdk.AccAddress, tokens sdk.Coin) error {
+	// mint new tokens if the source of the transfer is the same chain
+	if err := k.bankKeeper.MintCoins(
+		ctx, types.ModuleName, sdk.NewCoins(tokens),
+	); err != nil {
+		return err
+	}
+
+	// send to receiver
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(
+		ctx, types.ModuleName, receiver, sdk.NewCoins(tokens),
+	); err != nil {
+		panic(
+			fmt.Sprintf(
+				"Unable to send coins from module to account despite previously minting coins to module account: %v",
+				err,
+			),
+		)
+	}
+
+	return nil
+}
+
+func (k Keeper) UnlockTokens(
+	ctx sdk.Context,
+	sourcePort string,
+	sourceChannel string,
+	receiver sdk.AccAddress,
+	tokens sdk.Coin,
+) error {
+	// create the escrow address for the tokens
+	escrowAddress := ibctransfertypes.GetEscrowAddress(sourcePort, sourceChannel)
+
+	// escrow source tokens
+	// it fails is balance is insufficient
+	if err := k.bankKeeper.SendCoins(
+		ctx, escrowAddress, receiver, sdk.NewCoins(tokens),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
