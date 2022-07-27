@@ -1,0 +1,12 @@
+syntax = "proto3";
+package interchangenel.dex;
+
+option go_package = "interchange-nel/x/dex/types";
+
+message BuyOrderBook {
+  string index = 1; 
+  string amountDenom = 2; 
+  string priceDenom = 3; 
+  
+}
+
