@@ -3,15 +3,17 @@ package keeper
 import (
 	"errors"
 
+	"interchange-nel/x/dex/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	"interchange-nel/x/dex/types"
 )
 
-// TransmitCreatePairPacket transmits the packet over IBC with the specified source port and source channel
+// TransmitCreatePairPacket transmits the packet over IBC with the specified source port and source
+// channel
 func (k Keeper) TransmitCreatePairPacket(
 	ctx sdk.Context,
 	packetData types.CreatePairPacketData,
@@ -23,7 +25,12 @@ func (k Keeper) TransmitCreatePairPacket(
 
 	sourceChannelEnd, found := k.ChannelKeeper.GetChannel(ctx, sourcePort, sourceChannel)
 	if !found {
-		return sdkerrors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", sourcePort, sourceChannel)
+		return sdkerrors.Wrapf(
+			channeltypes.ErrChannelNotFound,
+			"port ID (%s) channel ID (%s)",
+			sourcePort,
+			sourceChannel,
+		)
 	}
 
 	destinationPort := sourceChannelEnd.GetCounterparty().GetPortID()
@@ -38,9 +45,15 @@ func (k Keeper) TransmitCreatePairPacket(
 		)
 	}
 
-	channelCap, ok := k.ScopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(sourcePort, sourceChannel))
+	channelCap, ok := k.ScopedKeeper.GetCapability(
+		ctx,
+		host.ChannelCapabilityPath(sourcePort, sourceChannel),
+	)
 	if !ok {
-		return sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+		return sdkerrors.Wrap(
+			channeltypes.ErrChannelCapabilityNotFound,
+			"module does not own channel capability",
+		)
 	}
 
 	packetBytes, err := packetData.GetBytes()
@@ -67,20 +80,50 @@ func (k Keeper) TransmitCreatePairPacket(
 }
 
 // OnRecvCreatePairPacket processes packet reception
-func (k Keeper) OnRecvCreatePairPacket(ctx sdk.Context, packet channeltypes.Packet, data types.CreatePairPacketData) (packetAck types.CreatePairPacketAck, err error) {
+func (k Keeper) OnRecvCreatePairPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	data types.CreatePairPacketData,
+) (packetAck types.CreatePairPacketAck, err error) {
 	// validate packet data upon receiving
 	if err := data.ValidateBasic(); err != nil {
 		return packetAck, err
 	}
 
-	// TODO: packet reception logic
+	// get an order book index
+	pairIndex := types.OrderBookIndex(
+		packet.SourcePort,
+		packet.SourceChannel,
+		data.SourceDenom,
+		data.TargetDenom,
+	)
+
+	// if an order book is found, return an error
+	_, found := k.GetBuyOrderBook(ctx, pairIndex)
+	if found {
+		return packetAck, errors.New("The pair already exists")
+	}
+
+	// create a new buy order book for source and target denoms
+	book := types.NewBuyOrderBook(data.SourceDenom, data.TargetDenom)
+
+	// assign order book index
+	book.Index = pairIndex
+
+	// save the order book to the store
+	k.SetBuyOrderBook(ctx, book)
 
 	return packetAck, nil
 }
 
 // OnAcknowledgementCreatePairPacket responds to the the success or failure of a packet
 // acknowledgement written on the receiving chain.
-func (k Keeper) OnAcknowledgementCreatePairPacket(ctx sdk.Context, packet channeltypes.Packet, data types.CreatePairPacketData, ack channeltypes.Acknowledgement) error {
+func (k Keeper) OnAcknowledgementCreatePairPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	data types.CreatePairPacketData,
+	ack channeltypes.Acknowledgement,
+) error {
 	switch dispatchedAck := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Error:
 
@@ -106,8 +149,13 @@ func (k Keeper) OnAcknowledgementCreatePairPacket(ctx sdk.Context, packet channe
 	}
 }
 
-// OnTimeoutCreatePairPacket responds to the case where a packet has not been transmitted because of a timeout
-func (k Keeper) OnTimeoutCreatePairPacket(ctx sdk.Context, packet channeltypes.Packet, data types.CreatePairPacketData) error {
+// OnTimeoutCreatePairPacket responds to the case where a packet has not been transmitted because of
+// a timeout
+func (k Keeper) OnTimeoutCreatePairPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	data types.CreatePairPacketData,
+) error {
 
 	// TODO: packet timeout logic
 
