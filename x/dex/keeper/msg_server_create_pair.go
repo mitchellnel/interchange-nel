@@ -2,16 +2,28 @@ package keeper
 
 import (
 	"context"
+	"errors"
+
+	"interchange-nel/x/dex/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	"interchange-nel/x/dex/types"
 )
 
-func (k msgServer) SendCreatePair(goCtx context.Context, msg *types.MsgSendCreatePair) (*types.MsgSendCreatePairResponse, error) {
+func (k msgServer) SendCreatePair(
+	goCtx context.Context,
+	msg *types.MsgSendCreatePair,
+) (*types.MsgSendCreatePairResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: logic before transmitting the packet
+	// get an order book index
+	pairIndex := types.OrderBookIndex(msg.Port, msg.ChannelID, msg.SourceDenom, msg.TargetDenom)
+
+	// if an order book is found, return an error
+	_, found := k.GetSellOrderBook(ctx, pairIndex)
+	if found {
+		return &types.MsgSendCreatePairResponse{}, errors.New("The pair already exists")
+	}
 
 	// Construct the packet
 	var packet types.CreatePairPacketData
