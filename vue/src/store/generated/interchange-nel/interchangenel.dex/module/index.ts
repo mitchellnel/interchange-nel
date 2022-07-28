@@ -5,16 +5,16 @@ import { SigningStargateClient } from "@cosmjs/stargate";
 import { Registry, OfflineSigner, EncodeObject, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
 import { MsgSendCreatePair } from "./types/dex/tx";
-import { MsgSendBuyOrder } from "./types/dex/tx";
 import { MsgCancelBuyOrder } from "./types/dex/tx";
+import { MsgSendBuyOrder } from "./types/dex/tx";
 import { MsgCancelSellOrder } from "./types/dex/tx";
 import { MsgSendSellOrder } from "./types/dex/tx";
 
 
 const types = [
   ["/interchangenel.dex.MsgSendCreatePair", MsgSendCreatePair],
-  ["/interchangenel.dex.MsgSendBuyOrder", MsgSendBuyOrder],
   ["/interchangenel.dex.MsgCancelBuyOrder", MsgCancelBuyOrder],
+  ["/interchangenel.dex.MsgSendBuyOrder", MsgSendBuyOrder],
   ["/interchangenel.dex.MsgCancelSellOrder", MsgCancelSellOrder],
   ["/interchangenel.dex.MsgSendSellOrder", MsgSendSellOrder],
   
@@ -50,8 +50,8 @@ const txClient = async (wallet: OfflineSigner, { addr: addr }: TxClientOptions =
   return {
     signAndBroadcast: (msgs: EncodeObject[], { fee, memo }: SignAndBroadcastOptions = {fee: defaultFee, memo: ""}) => client.signAndBroadcast(address, msgs, fee,memo),
     msgSendCreatePair: (data: MsgSendCreatePair): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendCreatePair", value: MsgSendCreatePair.fromPartial( data ) }),
-    msgSendBuyOrder: (data: MsgSendBuyOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendBuyOrder", value: MsgSendBuyOrder.fromPartial( data ) }),
     msgCancelBuyOrder: (data: MsgCancelBuyOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgCancelBuyOrder", value: MsgCancelBuyOrder.fromPartial( data ) }),
+    msgSendBuyOrder: (data: MsgSendBuyOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendBuyOrder", value: MsgSendBuyOrder.fromPartial( data ) }),
     msgCancelSellOrder: (data: MsgCancelSellOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgCancelSellOrder", value: MsgCancelSellOrder.fromPartial( data ) }),
     msgSendSellOrder: (data: MsgSendSellOrder): EncodeObject => ({ typeUrl: "/interchangenel.dex.MsgSendSellOrder", value: MsgSendSellOrder.fromPartial( data ) }),
     
