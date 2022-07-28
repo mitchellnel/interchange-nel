@@ -108,7 +108,7 @@ func (k Keeper) OnRecvSellOrderPacket(
 	})
 
 	// return the remaining amount and gains
-	packetAck.RemainingAmount = remaining
+	packetAck.RemainingAmount = remaining.Amount
 	packetAck.Gain = gain
 
 	// before distributing sales, we resolve the denom
